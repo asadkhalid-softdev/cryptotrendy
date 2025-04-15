@@ -1,7 +1,8 @@
 requests==2.31.0
 pycoingecko==3.1.0
 openpyxl==3.1.2
-pandas==2.1.0
+pandas==2.1.4
+numpy==1.26.4
 openai==1.16.0
 python-telegram-bot==20.7
 python-dotenv==1.0.0
