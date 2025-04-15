@@ -1,0 +1,9 @@
+requests==2.31.0
+pycoingecko==3.1.0
+openpyxl==3.1.2
+pandas==2.1.0
+openai==1.16.0
+python-telegram-bot==20.7
+python-dotenv==1.0.0
+praw==7.8.1
+tiktoken==0.5.2
