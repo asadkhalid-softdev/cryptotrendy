@@ -49,12 +49,3 @@ jobs:
       with:
         name: crypto-signals
         path: cryptos.xlsx
-
-    - name: Commit and push changes
-      run: |
-        git config --global user.name "GitHub Actions Bot"
-        git config --global user.email "actions@github.com"
-        git add cryptos.xlsx
-        # Use || true to prevent workflow failure if there are no changes
-        git commit -m "Update crypto signals for $(date +'%Y-%m-%d')" || true
-        git push
