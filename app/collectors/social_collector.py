@@ -29,7 +29,7 @@ class SocialMediaCollector:
             ssl._create_default_https_context = ssl._create_unverified_context
             print("Development mode: SSL certificate verification disabled")
         
-    def get_reddit_posts(self, subreddits=['CryptoCurrency', 'CryptoMarkets'], limit=100):
+    def get_reddit_posts(self, subreddits=['CryptoCurrency', 'CryptoMarkets', 'Altcoin', 'Solana', 'DeFi', 'CryptoMoonShots', 'Cardano'], limit=100):
         """Collect top posts from cryptocurrency subreddits"""
         if not self.reddit_enabled:
             return []
