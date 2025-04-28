@@ -8,7 +8,8 @@ class TelegramSender:
         self.token = os.getenv('TELEGRAM_BOT_TOKEN')
         self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
         self.enabled = self.token is not None and self.chat_id is not None
-        
+        self.max_coins = int(os.getenv('MAX_COINS_TELEGRAM', '10')) # <-- Wrap with int()
+
         if not self.enabled:
             print("Telegram bot not configured. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to enable.")
             
@@ -29,7 +30,7 @@ class TelegramSender:
         """Send message (synchronous wrapper)"""
         return asyncio.run(self.send_message_async(message))
         
-    def format_analysis_for_telegram(self, analysis_result, max_coins=3):
+    def format_analysis_for_telegram(self, analysis_result):
         """Format analysis results for Telegram message"""
         if not analysis_result or 'analysis' not in analysis_result:
             return "No analysis data available to send."
@@ -42,7 +43,7 @@ class TelegramSender:
         # Sort by breakout score (descending)
         if isinstance(analysis_data, list):
             sorted_coins = sorted(analysis_data, key=lambda x: float(x.get('breakout_score', 0)), reverse=True)
-            top_coins = sorted_coins[:max_coins]
+            top_coins = sorted_coins[:self.max_coins]
         else:
             # Single coin case
             top_coins = [analysis_data]
@@ -63,7 +64,7 @@ class TelegramSender:
         
         return message
         
-    def send_analysis(self, analysis_result, max_coins=3):
+    def send_analysis(self, analysis_result):
         """Format and send analysis results via Telegram"""
-        message = self.format_analysis_for_telegram(analysis_result, max_coins)
+        message = self.format_analysis_for_telegram(analysis_result)
         return self.send_message(message) 

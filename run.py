@@ -11,6 +11,7 @@ load_dotenv()
 # Import components
 from app.collectors.coingecko_collector import CoinGeckoCollector
 from app.collectors.social_collector import SocialMediaCollector
+from app.collectors.kucoin_collector import KuCoinCollector
 from app.formatters.data_formatter import DataFormatter
 from app.analysis.gpt_analyzer import GPTAnalyzer
 from app.output.excel_exporter import ExcelExporter
@@ -21,9 +22,10 @@ def main():
     start_time = time.time()
     print(f"🔍 Starting crypto signal analysis - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Check for development mode
+    # Check for development mode and feature flags
     dev_mode = os.getenv('DEVELOPMENT_MODE', 'false').lower() == 'true'
     skip_gpt = os.getenv('SKIP_GPT', 'false').lower() == 'true'
+    enable_kucoin_ta = os.getenv('ENABLE_KUCOIN_TA', 'false').lower() == 'true'
     
     if dev_mode:
         print("ℹ️ Running in development mode")
@@ -48,113 +50,84 @@ def main():
     coin_symbols = [coin.get('symbol', '').upper() for coin in coingecko_data['market_data']]
     print(f"  ✓ Found {len(coin_symbols)} coins in market data")
     
+    # KuCoin TA data (Conditional)
+    kucoin_collector = KuCoinCollector()
+    kucoin_data = {}
+    if enable_kucoin_ta:
+        kucoin_data = kucoin_collector.collect(coin_symbols)
+    else:
+        print("  - KuCoin TA is disabled via environment variable.")
+    
     # Social media data
     print("  - Fetching social media mentions...")
     social_media = SocialMediaCollector()
-    social_media_data = social_media.collect(coin_symbols)
-    
-    # Continue even if social media fails, but log a warning
-    if not social_media_data:
-        print("  ⚠️ Warning: No social media data collected. Continuing with market data only.")
-    
-    # Combine all collected data
-    collected_data = {
-        'coingecko': coingecko_data,
-        'social_media': social_media_data
-    }
-    
-    # 2. Format and process data
-    print("\n🧹 Formatting and normalizing data...")
-    formatter = DataFormatter()
-    processed_data = formatter.process(collected_data)
-    
-    # Check if data processing was successful
-    if not processed_data or not processed_data.get('merged_data'):
-        print("  ❌ Error: Data formatting failed. Exiting.")
-        sys.exit(1)
-    
-    # Check if we have a valid GPT prompt
-    gpt_prompt = processed_data.get('gpt_prompt', '')
-    if not gpt_prompt or gpt_prompt == "No data available for analysis.":
-        print("  ❌ Error: No valid data available for GPT analysis. Exiting.")
-        sys.exit(1)
+    social_data_full = social_media.collect(coin_symbols)
 
-    # 3. Analyze with GPT
-    if skip_gpt:
-        print("\n🧠 Skipping GPT analysis as requested.")
-        # Create a dummy analysis result for testing
-        if dev_mode:
-            print("  ℹ️ Creating dummy analysis result for development")
-            analysis_result = {
-                'analysis': [
-                    {
-                        'coin_symbol': 'BTC',
-                        'breakout_score': 8.5,
-                        'reason': 'Dummy development analysis for Bitcoin',
-                        'timestamp': datetime.now().isoformat()
-                    },
-                    {
-                        'coin_symbol': 'ETH',
-                        'breakout_score': 7.8,
-                        'reason': 'Dummy development analysis for Ethereum',
-                        'timestamp': datetime.now().isoformat()
-                    }
-                ],
-                'timestamp': datetime.now().isoformat()
-            }
-            print(f"  ✓ Dummy analysis created")
-        else:
-            print("  ❌ Error: Skipping GPT but not in development mode. Exiting.")
-            sys.exit(1)
-    else:
+    # Extract the actual mentions dictionary
+    social_mentions_data = social_data_full.get('coin_mentions', {})
+
+    # Fix the log message to report based on the mentions dictionary
+    print(f"  ✓ Social media data collection complete (found mentions for {len(social_mentions_data)} coins)")
+    
+    # 2. Format data for analysis
+    print("\n🧹 Formatting data...")
+    formatter = DataFormatter()
+    formatted_data = formatter.format_for_gpt(coingecko_data, social_mentions_data, kucoin_data)
+    
+    if not formatted_data:
+        print("  ❌ Error: No data available after formatting. Exiting.")
+        sys.exit(1)
+    
+    print(f"  ✓ Formatted data for {len(formatted_data)} coins")
+    
+    # 3. Analyze data using GPT (Conditional)
+    analysis_result = {}
+    if not skip_gpt:
         print("\n🧠 Analyzing data with GPT...")
         analyzer = GPTAnalyzer()
-        analysis_result = analyzer.analyze(gpt_prompt)
-        
-        # Check if analysis was successful
-        if 'error' in analysis_result:
-            print(f"  ❌ Analysis error: {analysis_result['error']}. Exiting.")
-            sys.exit(1)
-        
-        if not analysis_result.get('analysis'):
-            print("  ❌ Error: GPT analysis returned no results. Exiting.")
-            sys.exit(1)
-        
-        print(f"  ✓ GPT analysis completed successfully")
+        analysis_result = analyzer.analyze(formatted_data)
+        if analysis_result and 'analysis' in analysis_result:
+            print(f"  ✓ GPT analysis complete. Found potential breakouts for {len(analysis_result.get('analysis', []))} coins.")
+        else:
+            print("  ✓ GPT analysis complete. No specific breakouts identified or error occurred.")
+    else:
+        print("\n🧠 Skipping GPT analysis...")
+        # Prepare a structure similar to GPT output for downstream processing if skipped
+        analysis_result = {
+            'timestamp': datetime.now().isoformat(),
+            'model_used': 'skipped',
+            'analysis': [{'coin_symbol': coin.get('symbol'), 'breakout_score': '0', 'reason': 'GPT analysis skipped'} for coin in formatted_data]
+        }
     
-    # 4. Export results
-    print("\n📊 Exporting results...")
+    # 4. Output results
+    print("\n📤 Exporting results...")
     
-    # Sort the analysis results by breakout_score in descending order
-    if analysis_result and 'analysis' in analysis_result and isinstance(analysis_result['analysis'], list):
-        analysis_result['analysis'] = sorted(
-            analysis_result['analysis'], 
-            key=lambda x: x.get('breakout_score', 0), 
-            reverse=True
-        )
+    # Prepare raw data bundle for Excel export
+    raw_data_bundle = {
+        'coingecko': coingecko_data,
+        'social': social_data_full,
+        'kucoin': kucoin_data,
+        'formatted_for_gpt': formatted_data
+    }
     
     # Save to Excel
     exporter = ExcelExporter()
-    excel_saved = exporter.save_analysis(analysis_result, processed_data)
-    
-    if not excel_saved:
-        print("  ⚠️ Warning: Failed to save Excel file.")
+    save_status = exporter.save_analysis(analysis_result, raw_data=raw_data_bundle)
+    if save_status:
+        print(f"  ✓ Results saved to {exporter.output_file}")
     else:
-        print("  ✓ Results exported to Excel")
+        print(f"  ❌ Failed to save results to Excel.")
     
     # Send to Telegram
-    telegram = TelegramSender()
-    if telegram.enabled:
-        print("  - Sending top results to Telegram...")
-        telegram_sent = telegram.send_analysis(analysis_result, max_coins=int(os.getenv('MAX_COINS', 10)))
-        if telegram_sent:
-            print("  ✓ Telegram alert sent successfully")
-        else:
-            print("  ⚠️ Failed to send Telegram alert")
+    telegram_sender = TelegramSender()
+    send_status = telegram_sender.send_analysis(analysis_result)
+    if send_status:
+        print("  ✓ Telegram notification sent successfully.")
+    else:
+        print("  ❌ Failed to send Telegram notification.")
     
-    # Execution summary
-    execution_time = time.time() - start_time
-    print(f"\n✅ Analysis completed in {execution_time:.2f} seconds")
+    end_time = time.time()
+    print(f"\n✅ Crypto signal analysis finished in {end_time - start_time:.2f} seconds.")
     
 if __name__ == "__main__":
     main() 

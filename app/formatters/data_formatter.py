@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import os
 
 class DataFormatter:
     def __init__(self):
+        # Define thresholds or scaling factors if needed
+        self.max_coins_to_analyze = int(os.getenv('MAX_COINS_TO_ANALYZE', 10))
         pass
         
     def normalize_scores(self, values, min_val=None, max_val=None):
@@ -99,52 +102,89 @@ class DataFormatter:
         # Convert back to list of dictionaries
         return df.to_dict('records')
         
-    def format_for_gpt(self, normalized_data):
-        """Format data into a prompt for GPT analysis"""
-        if not normalized_data:
-            return "No data available for analysis."
-            
-        prompt = """Based on the data below, rank coins by breakout potential. Justify each score.
+    def _normalize(self, value, min_val, max_val):
+        """Normalize a value between 0 and 1."""
+        if max_val == min_val:
+            return 0.5 # Avoid division by zero, return neutral value
+        return (value - min_val) / (max_val - min_val)
 
-COIN DATA:
-"""
-        
-        # Add data for each coin
-        for coin in normalized_data:
-            prompt += f"\n--- {coin['name']} ({coin['symbol']}) ---\n"
-            prompt += f"• Price: ${coin['price']:.4f}\n"
-            prompt += f"• Market Cap: ${coin['market_cap']:,}\n"
-            prompt += f"• 24h Volume: ${coin['volume_24h']:,}\n"
-            prompt += f"• 24h Price Change: {coin['price_change_24h']:.2f}%\n"
-            prompt += f"• 7d Price Change: {coin['price_change_7d']:.2f}%\n"
-            
-            # Add social data
-            prompt += f"• Reddit Mentions: {coin.get('reddit_mentions', 0)}\n"
-            
-            # Add trending flag if applicable
-            if coin.get('is_trending', False):
-                prompt += "• TRENDING ON COINGECKO\n"
-                
-        prompt += """
-Output JSON with:
-- coin_symbol: Symbol of the cryptocurrency
-- breakout_score: Score from 0-10 based on breakout potential
-- reason: Brief explanation for the score
-- timestamp: Current analysis timestamp
+    def format_for_gpt(self, coingecko_data, social_data, kucoin_data):
+        """
+        Format combined data into a structure suitable for GPT analysis.
+        Includes CoinGecko market data, social mentions, and KuCoin RSI data.
+        """
+        # print(coingecko_data)
 
-IMPORTANT: Provide a rating for ALL coins that have ANY Reddit mentions, even if they have low breakout potential.
-For coins with low potential, you may assign a low score (0-3), but still include them in the results.
+        market_data = coingecko_data.get('market_data', [])
+        trending_coins = coingecko_data.get('trending_coins', [])
 
-Format the output as a valid JSON array.
-"""
-        
-        return prompt
+        # If no market data, we can't proceed
+        if not market_data:
+            print("  Formatter: No market data found.")
+            return []
+
+        # Create a set of trending coin symbols for quick lookup
+        trending_symbols = {
+            coin['symbol'].upper()
+            for coin in trending_coins
+        }
+
+        # Create merged data
+        merged_coins = []
+        for coin in market_data:
+            symbol = coin.get('symbol', '').upper()
+            if not symbol:
+                continue
+
+            # Basic coin info from CoinGecko
+            coin_info = {
+                'symbol': symbol,
+                'name': coin.get('name'),
+                'price': coin.get('current_price'),
+                'market_cap': coin.get('market_cap'),
+                'market_cap_rank': coin.get('market_cap_rank'),
+                'volume_24h': coin.get('total_volume'),
+                'price_change_24h': coin.get('price_change_percentage_24h'),
+                'price_change_7d': coin.get('price_change_percentage_7d_in_currency'),
+                'is_trending': symbol in trending_symbols
+            }
+
+            # if not coin_info.get('is_trending'):
+            #     continue
+
+            # Add social data if available
+            coin_social = social_data.get(symbol, {})
+            coin_info['social_mentions'] = coin_social.get('reddit_mentions', 0)
+
+            # Add KuCoin RSI data if available
+            coin_kucoin = kucoin_data.get(symbol, {})
+
+            coin_info['rsi_1d'] = coin_kucoin.get('rsi_1d') # Will be None if not found/calculated
+            coin_info['rsi_7d'] = coin_kucoin.get('rsi_7d') # Will be None if not found/calculated
+
+            # --- Data Cleaning/Normalization (Optional but Recommended) ---
+            # Example: Ensure numeric types, handle None values for GPT
+            for key in ['price', 'market_cap', 'volume_24h', 'price_change_24h', 'price_change_7d', 'rsi_1d', 'rsi_7d']:
+                if coin_info[key] is None or not isinstance(coin_info[key], (int, float)):
+                    coin_info[key] = 'N/A' # Use 'N/A' string for GPT if data is missing
+
+            merged_coins.append(coin_info)
+
+        # --- Filtering/Ranking before sending to GPT (Optional) ---
+        # Example: Prioritize trending coins or coins with high volume change
+        # For now, just limit the number of coins based on market cap rank
+        merged_coins.sort(key=lambda x: x.get('market_cap_rank') or float('inf')) # Sort by rank, handle None
+        limited_coins = merged_coins[:self.max_coins_to_analyze]
+        print(f"  Formatter: Limited coins to {len(limited_coins)}.")
+
+        print(f"  Formatter: Prepared data for {len(limited_coins)} coins (out of {len(market_data)}).")
+        return limited_coins
         
     def process(self, collected_data):
         """Process all collected data and prepare for GPT analysis"""
         merged_data = self.merge_coin_data(collected_data)
         normalized_data = self.normalize_merged_data(merged_data)
-        gpt_prompt = self.format_for_gpt(normalized_data)
+        gpt_prompt = self.format_for_gpt(collected_data['coingecko'], collected_data['social_media'], collected_data['kucoin'])
         
         return {
             'merged_data': merged_data,

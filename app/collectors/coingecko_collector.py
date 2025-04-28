@@ -6,13 +6,12 @@ class CoinGeckoCollector:
     def __init__(self):
         self.cg = CoinGeckoAPI()
         self.top_coins_limit = int(os.getenv('TOP_COINS_LIMIT', 100))
-        self.trending_limit = int(os.getenv('TRENDING_COINS_LIMIT', 20))
     
     def get_trending_coins(self):
         """Fetch trending coins from CoinGecko"""
         try:
             trending = self.cg.get_search_trending()
-            return [coin['item'] for coin in trending['coins'][:self.trending_limit]]
+            return [coin['item'] for coin in trending['coins']]
         except Exception as e:
             print(f"Error fetching trending coins: {e}")
             return []
@@ -30,7 +29,10 @@ class CoinGeckoCollector:
             )
             
             # Add a small delay to avoid API rate limiting
-            time.sleep(1)
+            time.sleep(0.5)
+
+            print(f"Fetched market data for {len(market_data)} coins")
+            
             return market_data
         except Exception as e:
             print(f"Error fetching market data: {e}")
