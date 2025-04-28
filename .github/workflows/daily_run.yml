@@ -32,7 +32,7 @@ jobs:
       env:
         # Core Secrets (Required)
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        MAX_COINS_TO_ANALYZE: 30
+        MAX_COINS_TO_ANALYZE: 100
 
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -41,7 +41,7 @@ jobs:
         # Optional Secrets (Needed for specific collectors)
         REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
         REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-        
+
         ENABLE_KUCOIN_TA: true
         KUCOIN_API_KEY: ${{ secrets.KUCOIN_API_KEY }}
         KUCOIN_API_SECRET: ${{ secrets.KUCOIN_API_SECRET }}
