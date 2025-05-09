@@ -58,6 +58,12 @@ def main():
     else:
         print("  - KuCoin TA is disabled via environment variable.")
     
+    # Filter coin_symbols to only those present in kucoin_data if KuCoin TA is enabled
+    if enable_kucoin_ta:
+        original_count = len(coin_symbols)
+        coin_symbols = [symbol for symbol in coin_symbols if symbol in kucoin_data]
+        print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
+    
     # Social media data
     print("  - Fetching social media mentions...")
     social_media = SocialMediaCollector()

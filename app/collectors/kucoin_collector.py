@@ -123,4 +123,11 @@ class KuCoinCollector:
             time.sleep(0.2) # Basic rate limiting
 
         print("  ✓ KuCoin TA data collection complete.")
-        return results 
+        # Filter out symbols with RSI values greater than 70
+        filtered_results = {}
+        for symbol, metrics in results.items():
+            rsi_1d = metrics.get('rsi_1d')
+            rsi_7d = metrics.get('rsi_7d')
+            if (rsi_1d is None or rsi_1d <= 70) and (rsi_7d is None or rsi_7d <= 70):
+                filtered_results[symbol] = metrics
+        return filtered_results 
