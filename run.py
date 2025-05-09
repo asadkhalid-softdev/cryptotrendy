@@ -63,6 +63,9 @@ def main():
         original_count = len(coin_symbols)
         coin_symbols = [symbol for symbol in coin_symbols if symbol in kucoin_data]
         print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
+        # Filter CoinGecko market_data to include only symbols present in KuCoin data
+        coingecko_data['market_data'] = [entry for entry in coingecko_data['market_data'] if entry.get('symbol', '').upper() in coin_symbols]
+        print(f"  ✓ {len(coingecko_data['market_data'])} CoinGecko entries remain after KuCoin filter")
     
     # Social media data
     print("  - Fetching social media mentions...")
