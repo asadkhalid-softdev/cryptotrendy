@@ -17,6 +17,11 @@ from app.analysis.gpt_analyzer import GPTAnalyzer
 from app.output.excel_exporter import ExcelExporter
 from app.output.telegram_sender import TelegramSender
 
+coingecko = CoinGeckoCollector()
+social_media = SocialMediaCollector()
+kucoin_collector = KuCoinCollector()
+telegram_sender = TelegramSender()
+
 def main():
     """Main function to orchestrate the crypto analysis pipeline"""
     start_time = time.time()
@@ -38,7 +43,6 @@ def main():
     
     # CoinGecko data
     print("  - Fetching CoinGecko market data...")
-    coingecko = CoinGeckoCollector()
     coingecko_data = coingecko.collect()
     
     # Check if CoinGecko data was successfully retrieved
@@ -51,7 +55,6 @@ def main():
     print(f"  ✓ Found {len(coin_symbols)} coins in market data")
     
     # KuCoin TA data (Conditional)
-    kucoin_collector = KuCoinCollector()
     kucoin_data = {}
     if enable_kucoin_ta:
         kucoin_data = kucoin_collector.collect(coin_symbols)
@@ -69,7 +72,6 @@ def main():
     
     # Social media data
     print("  - Fetching social media mentions...")
-    social_media = SocialMediaCollector()
     social_data_full = social_media.collect(coin_symbols)
 
     # Extract the actual mentions dictionary
@@ -128,7 +130,6 @@ def main():
         print(f"  ❌ Failed to save results to Excel.")
     
     # Send to Telegram
-    telegram_sender = TelegramSender()
     send_status = telegram_sender.send_analysis(analysis_result)
     if send_status:
         print("  ✓ Telegram notification sent successfully.")
