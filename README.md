@@ -16,6 +16,7 @@ CryptoTrendy is a Python-based pipeline designed to identify cryptocurrencies wi
     *   Control the number of top coins to analyze (`MAX_COINS_TO_ANALYZE`).
     *   Enable/disable KuCoin Technical Analysis (`ENABLE_KUCOIN_TA`).
     *   Optionally skip the GPT analysis step (`SKIP_GPT`).
+    *   Existing Assets Alerts (`CURRENT_ASSET_SHEET_ID`): Pulls a 'Symbols' list from a Google Sheet, detects overbought assets (1-day & 1-week RSI > 70), and sends Telegram alerts.
 *   **Structured Outputs:**
     *   **Excel Reports:** Generates timestamped sheets in `cryptos.xlsx` containing:
         *   Detailed analysis results (scores, reasons, market data, social mentions, RSI if enabled).
@@ -43,11 +44,13 @@ CryptoTrendy is a Python-based pipeline designed to identify cryptocurrencies wi
 3.  **Configure:**
     *   Copy `.env.example` to `.env`.
     *   Fill in your API keys (`OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, optional `REDDIT_*`, optional `KUCOIN_*`) and adjust settings as needed in the `.env` file.
+    *   (Optional) Set `CURRENT_ASSET_SHEET_ID` to enable custom assets overbought alerts from a Google Sheet.
 
 4.  **Run:**
     ```bash
     python run.py
     ```
+    This executes the main breakout analysis and, if `CURRENT_ASSET_SHEET_ID` is configured, also runs the existing assets overbought alerts via Google Sheets.
 
 5.  **Check Outputs:**
     *   `cryptos.xlsx` file in the root directory.

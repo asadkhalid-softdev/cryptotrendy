@@ -142,7 +142,10 @@ def main():
 
 def current_asset_analysis():
     """Fetch symbols from Google Sheet, fetch KuCoin RSI data, and send alerts for overbought symbols."""
-    sheet_id = '1A1DWpFGwxn_dQvuIoLqiOsS9Fy5EmZuiI0ZGK0_Yfes'
+    sheet_id = os.getenv('CURRENT_ASSET_SHEET_ID')
+    if not sheet_id:
+        print("Environment variable CURRENT_ASSET_SHEET_ID is not set.")
+        return
     csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     try:
         df_sheet = pd.read_csv(csv_url)

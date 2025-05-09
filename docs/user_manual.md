@@ -52,6 +52,7 @@ This document provides instructions on how to set up and run the CryptoTrendy an
         *   `MAX_COINS_TELEGRAM`: (Optional) Controls how many top coins from the analysis are sent via Telegram message (defaults to 3 if not set). Ensure this is an integer.
         *   `SKIP_GPT`: Set to `true` to bypass the GPT analysis call.
         *   `TOP_COINS_LIMIT`: Max coins to fetch from CoinGecko market data.
+        *   `CURRENT_ASSET_SHEET_ID`: (Optional) Google Sheet ID to fetch a 'Symbols' list for existing assets RSI alerts.
         *   `TRENDING_COINS_LIMIT`: Max trending coins to fetch from CoinGecko.
     *   **Example `.env` content:**
         ```env
@@ -76,6 +77,8 @@ This document provides instructions on how to set up and run the CryptoTrendy an
         SKIP_GPT=false
         DEVELOPMENT_MODE=false
         TOP_COINS_LIMIT=100
+        # Existing Assets Alerts
+        CURRENT_ASSET_SHEET_ID=your_google_sheet_id_here
         ```
 
 ### Running the Analysis
@@ -91,6 +94,7 @@ This document provides instructions on how to set up and run the CryptoTrendy an
     python run.py
     ```
     *   The script will print progress messages to the console, including data collection, formatting, analysis, and output steps.
+    *   If `CURRENT_ASSET_SHEET_ID` is configured, the script will also run existing assets RSI alert analysis.
 
 3.  **Check Outputs:**
     *   Look for the updated `cryptos.xlsx` file in the project directory. It will contain sheets like `Analysis_YYYYMMDD_HHMMSS` and `RawData_YYYYMMDD_HHMMSS`.
