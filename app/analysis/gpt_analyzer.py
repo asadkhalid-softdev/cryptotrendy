@@ -138,7 +138,7 @@ Format the output as a valid JSON array.
                     {"role": "user", "content": prompt_content}
                 ],
                 response_format={"type": "json_object"}, # Enforce JSON output
-                temperature=0.5 # Adjust temperature for desired creativity/consistency
+                temperature=0.2 # Adjust temperature for desired creativity/consistency
             )
 
             end_time = datetime.now()
