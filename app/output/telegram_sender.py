@@ -56,8 +56,11 @@ class TelegramSender:
             symbol = coin.get('coin_symbol', '')
             score = coin.get('breakout_score', 0)
             reason = coin.get('reason', '').replace('\n', ' ')
+            # Extract RSI values
+            rsi_1d = coin.get('rsi_1d', 'N/A')
+            rsi_7d = coin.get('rsi_7d', 'N/A')
             
-            message += f"*{i}. {symbol}* - Score: {score}/10\n"
+            message += f"*{i}. {symbol}* - Score: {score}/10 \n RSI 1D: {rsi_1d}, 7D: {rsi_7d}\n"
             message += f"_{reason}_\n\n"
             
         message += "\n_This is an automated analysis and not financial advice._"

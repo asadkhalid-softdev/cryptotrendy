@@ -111,6 +111,15 @@ def main():
             'analysis': [{'coin_symbol': coin.get('symbol'), 'breakout_score': '0', 'reason': 'GPT analysis skipped'} for coin in formatted_data]
         }
     
+    # Enrich analysis results with RSI data
+    for entry in analysis_result.get('analysis', []):
+        symbol = entry.get('coin_symbol')
+        metrics = kucoin_data.get(symbol, {})
+        entry['rsi_1d'] = metrics.get('rsi_1d')
+        entry['rsi_7d'] = metrics.get('rsi_7d')
+    
+    print(analysis_result.get('analysis'))
+    
     # 4. Output results
     print("\n📤 Exporting results...")
     
