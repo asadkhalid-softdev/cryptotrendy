@@ -118,8 +118,6 @@ def main():
         entry['rsi_1d'] = metrics.get('rsi_1d')
         entry['rsi_7d'] = metrics.get('rsi_7d')
     
-    print(analysis_result.get('analysis'))
-    
     # 4. Output results
     print("\n📤 Exporting results...")
     
