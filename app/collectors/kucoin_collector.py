@@ -5,6 +5,10 @@ import pandas_ta as ta
 from datetime import datetime, timedelta
 from kucoin.client import Market
 
+# At top of run.py or in a config module
+RSI_BUY_1D_THRESHOLD = int(os.getenv('RSI_BUY_1D_THRESHOLD', '50'))
+RSI_BUY_7D_THRESHOLD = int(os.getenv('RSI_BUY_7D_THRESHOLD', '50'))
+
 class KuCoinCollector:
     def __init__(self):
         """Initialize KuCoin client and settings."""
@@ -128,6 +132,6 @@ class KuCoinCollector:
         for symbol, metrics in results.items():
             rsi_1d = metrics.get('rsi_1d')
             rsi_7d = metrics.get('rsi_7d')
-            if (rsi_1d is None or rsi_1d <= 70) and (rsi_7d is None or rsi_7d <= 70):
+            if (rsi_1d is None or rsi_1d <= RSI_BUY_1D_THRESHOLD) and (rsi_7d is None or rsi_7d <= RSI_BUY_7D_THRESHOLD):
                 filtered_results[symbol] = metrics
         return filtered_results 

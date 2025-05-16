@@ -23,6 +23,10 @@ social_media = SocialMediaCollector()
 kucoin_collector = KuCoinCollector()
 telegram_sender = TelegramSender()
 
+# At top of run.py or in a config module
+RSI_SELL_1D_THRESHOLD = int(os.getenv('RSI_SELL_1D_THRESHOLD', '80'))
+RSI_SELL_7D_THRESHOLD = int(os.getenv('RSI_SELL_7D_THRESHOLD', '70'))
+
 def main():
     """Main function to orchestrate the crypto analysis pipeline"""
     start_time = time.time()
@@ -173,7 +177,7 @@ def current_asset_analysis():
     for sym, metrics in ku_data.items():
         r1 = metrics.get('rsi_1d')
         r7 = metrics.get('rsi_7d')
-        if r1 is not None and r7 is not None and r1 > 70 and r7 > 70:
+        if r1 is not None and r7 is not None and r1 > RSI_SELL_1D_THRESHOLD and r7 > RSI_SELL_7D_THRESHOLD:
             notification_list.append({'symbol': sym, 'rsi_1d': r1, 'rsi_7d': r7})
 
     if not notification_list:
