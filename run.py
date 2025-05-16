@@ -181,7 +181,7 @@ def current_asset_analysis():
             notification_list.append({'symbol': sym, 'rsi_1d': r1, 'rsi_7d': r7})
 
     if not notification_list:
-        print("No symbols with both RSI_1d and RSI_7d >70 found.")
+        print("No symbols with both RSI_1d and RSI_7d > thresholds found.")
         return
     # Build notification message
     message = "*🚨 RSI Alert: KuCoin Overbought Signals 🚨*\n\n"

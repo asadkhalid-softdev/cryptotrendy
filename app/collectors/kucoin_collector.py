@@ -113,7 +113,7 @@ class KuCoinCollector:
                 print(f"      - Daily RSI: {rsi_1d}")
             else:
                  print(f"      - Could not fetch daily data or calculate RSI.")
-            time.sleep(0.2) # Basic rate limiting
+            time.sleep(0.2)  # Basic rate limiting
 
             # --- Weekly RSI ---
             # Fetch ~30 weeks of data for 14-week RSI
@@ -124,14 +124,17 @@ class KuCoinCollector:
                 print(f"      - Weekly RSI: {rsi_7d}")
             else:
                 print(f"      - Could not fetch weekly data or calculate RSI.")
-            time.sleep(0.2) # Basic rate limiting
+            time.sleep(0.2)  # Basic rate limiting
+
+            # Filter out symbols exceeding thresholds
+            if ((results[symbol]['rsi_1d'] is None)
+                or (results[symbol]['rsi_7d'] is None)):
+                print(f"      - Filtering out {symbol} (1d: {results[symbol]['rsi_1d']}, 7d: {results[symbol]['rsi_7d']})")
+                del results[symbol]
+            elif ((results[symbol]['rsi_1d'] > RSI_BUY_1D_THRESHOLD)
+                or (results[symbol]['rsi_7d'] > RSI_BUY_7D_THRESHOLD)):
+                print(f"      - Filtering out {symbol} (1d: {results[symbol]['rsi_1d']}, 7d: {results[symbol]['rsi_7d']})")
+                del results[symbol]
 
         print("  ✓ KuCoin TA data collection complete.")
-        # Filter out symbols with RSI values greater than 70
-        filtered_results = {}
-        for symbol, metrics in results.items():
-            rsi_1d = metrics.get('rsi_1d')
-            rsi_7d = metrics.get('rsi_7d')
-            if (rsi_1d is None or rsi_1d <= RSI_BUY_1D_THRESHOLD) and (rsi_7d is None or rsi_7d <= RSI_BUY_7D_THRESHOLD):
-                filtered_results[symbol] = metrics
-        return filtered_results 
+        return results 
