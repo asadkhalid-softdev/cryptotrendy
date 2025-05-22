@@ -8,7 +8,7 @@ python-telegram-bot==21.2
 python-dotenv==1.0.1
 praw==7.8.1
 tiktoken==0.7.0
-kucoin==3.9.2
+kucoin-python==1.0.26
 pandas-ta==0.3.14b0
 setuptools==70.3.0
 tenacity==8.5.0
