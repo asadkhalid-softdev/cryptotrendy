@@ -1,9 +1,12 @@
 import os
 import time
+import logging
 import pandas as pd
 import pandas_ta as ta
 from datetime import datetime, timedelta
 from kucoin.client import Market
+
+logger = logging.getLogger(__name__)
 
 # At top of run.py or in a config module
 RSI_BUY_1D_THRESHOLD = int(os.getenv('RSI_BUY_1D_THRESHOLD', '50'))
@@ -20,10 +23,10 @@ class KuCoinCollector:
         if self.enabled:
             # Initialize Market client (doesn't require authentication for public endpoints)
             self.client = Market(url='https://api.kucoin.com') # Use Market for public data
-            print("  - KuCoin TA enabled. Market client initialized.")
+            logger.info("  - KuCoin TA enabled. Market client initialized.")
         else:
             self.client = None
-            print("  - KuCoin TA disabled.")
+            logger.info("  - KuCoin TA disabled.")
 
     def _get_ohlc(self, symbol_pair, interval='1day', limit=30):
         """
@@ -45,7 +48,7 @@ class KuCoinCollector:
             klines = self.client.get_kline(symbol_pair, interval) # Default limit might be large enough
 
             if not klines:
-                print(f"    - No OHLC data found for {symbol_pair} ({interval})")
+                logger.warning(f"    - No OHLC data found for {symbol_pair} ({interval})")
                 return None
 
             # Convert to DataFrame
@@ -68,7 +71,7 @@ class KuCoinCollector:
             return df
 
         except Exception as e:
-            print(f"    - Error fetching KuCoin OHLC for {symbol_pair} ({interval}): {e}")
+            logger.error(f"    - Error fetching KuCoin OHLC for {symbol_pair} ({interval}): {e}", exc_info=True)
             # Handle specific KuCoin errors if needed, e.g., invalid symbol
             return None
 
@@ -83,7 +86,7 @@ class KuCoinCollector:
             latest_rsi = df[f'RSI_{period}'].iloc[-1]
             return round(latest_rsi, 2) if pd.notna(latest_rsi) else None
         except Exception as e:
-            print(f"    - Error calculating RSI: {e}")
+            logger.error(f"    - Error calculating RSI: {e}", exc_info=True)
             return None
 
     def collect(self, coin_symbols):
@@ -95,24 +98,24 @@ class KuCoinCollector:
             return {}
 
         results = {}
-        print("  - Fetching KuCoin TA data...")
+        logger.info("  - Fetching KuCoin TA data...")
 
         # Assume USDT pairing for simplicity. This might need refinement.
         # Consider adding error handling or logic for different base pairs if needed.
         for symbol in coin_symbols:
             symbol_pair = f"{symbol.upper()}-USDT"
-            print(f"    - Processing {symbol_pair}...")
-            results[symbol] = {'rsi_1d': None, 'rsi_7d': None}
+            logger.debug(f"    - Processing {symbol_pair}...")
+            current_symbol_result = {'rsi_1d': None, 'rsi_7d': None} # Store temporarily
 
             # --- Daily RSI ---
             # Fetch ~30 days of data for 14-day RSI
             df_1d = self._get_ohlc(symbol_pair, interval='1day', limit=30)
             if df_1d is not None:
                 rsi_1d = self._calculate_rsi(df_1d, period=14)
-                results[symbol]['rsi_1d'] = rsi_1d
-                print(f"      - Daily RSI: {rsi_1d}")
+                current_symbol_result['rsi_1d'] = rsi_1d
+                logger.debug(f"      - Daily RSI for {symbol_pair}: {rsi_1d}")
             else:
-                 print(f"      - Could not fetch daily data or calculate RSI.")
+                 logger.warning(f"      - Could not fetch daily data or calculate RSI for {symbol_pair}.")
             time.sleep(0.2)  # Basic rate limiting
 
             # --- Weekly RSI ---
@@ -120,21 +123,21 @@ class KuCoinCollector:
             df_1w = self._get_ohlc(symbol_pair, interval='1week', limit=30)
             if df_1w is not None:
                 rsi_7d = self._calculate_rsi(df_1w, period=14)
-                results[symbol]['rsi_7d'] = rsi_7d
-                print(f"      - Weekly RSI: {rsi_7d}")
+                current_symbol_result['rsi_7d'] = rsi_7d
+                logger.debug(f"      - Weekly RSI for {symbol_pair}: {rsi_7d}")
             else:
-                print(f"      - Could not fetch weekly data or calculate RSI.")
+                logger.warning(f"      - Could not fetch weekly data or calculate RSI for {symbol_pair}.")
             time.sleep(0.2)  # Basic rate limiting
 
             # Filter out symbols exceeding thresholds
-            if ((results[symbol]['rsi_1d'] is None)
-                or (results[symbol]['rsi_7d'] is None)):
-                print(f"      - Filtering out {symbol} (1d: {results[symbol]['rsi_1d']}, 7d: {results[symbol]['rsi_7d']})")
-                del results[symbol]
-            elif ((results[symbol]['rsi_1d'] > RSI_BUY_1D_THRESHOLD)
-                or (results[symbol]['rsi_7d'] > RSI_BUY_7D_THRESHOLD)):
-                print(f"      - Filtering out {symbol} (1d: {results[symbol]['rsi_1d']}, 7d: {results[symbol]['rsi_7d']})")
-                del results[symbol]
+            if ((current_symbol_result['rsi_1d'] is None)
+                or (current_symbol_result['rsi_7d'] is None)):
+                logger.info(f"      - Filtering out {symbol} due to missing RSI data (1d: {current_symbol_result['rsi_1d']}, 7d: {current_symbol_result['rsi_7d']})")
+            elif ((current_symbol_result['rsi_1d'] > RSI_BUY_1D_THRESHOLD)
+                or (current_symbol_result['rsi_7d'] > RSI_BUY_7D_THRESHOLD)):
+                logger.info(f"      - Filtering out {symbol} due to RSI exceeding buy thresholds (1d: {current_symbol_result['rsi_1d']}, 7d: {current_symbol_result['rsi_7d']})")
+            else:
+                results[symbol] = current_symbol_result # Add to results only if not filtered out
 
-        print("  ✓ KuCoin TA data collection complete.")
+        logger.info("  ✓ KuCoin TA data collection complete.")
         return results 

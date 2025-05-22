@@ -2,12 +2,15 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class DataFormatter:
     def __init__(self):
         # Define thresholds or scaling factors if needed
         self.max_coins_to_analyze = int(os.getenv('MAX_COINS_TO_ANALYZE', 10))
-        pass
+        logger.debug(f"DataFormatter initialized with max_coins_to_analyze: {self.max_coins_to_analyze}")
         
     def normalize_scores(self, values, min_val=None, max_val=None):
         """Normalize values to 0-1 range"""
@@ -113,14 +116,14 @@ class DataFormatter:
         Format combined data into a structure suitable for GPT analysis.
         Includes CoinGecko market data, social mentions, and KuCoin RSI data.
         """
-        # print(coingecko_data)
+        # logger.debug(f"Formatting for GPT. Coingecko data: {coingecko_data}, Social data: {social_data}, Kucoin data: {kucoin_data}")
 
         market_data = coingecko_data.get('market_data', [])
         trending_coins = coingecko_data.get('trending_coins', [])
 
         # If no market data, we can't proceed
         if not market_data:
-            print("  Formatter: No market data found.")
+            logger.warning("  Formatter: No market data found from CoinGecko. Cannot format for GPT.")
             return []
 
         # Create a set of trending coin symbols for quick lookup
@@ -175,9 +178,9 @@ class DataFormatter:
         # For now, just limit the number of coins based on market cap rank
         merged_coins.sort(key=lambda x: x.get('market_cap_rank') or float('inf')) # Sort by rank, handle None
         limited_coins = merged_coins[:self.max_coins_to_analyze]
-        print(f"  Formatter: Limited coins to {len(limited_coins)}.")
+        logger.info(f"  Formatter: Limited coins to {len(limited_coins)} for GPT analysis (max_coins_to_analyze: {self.max_coins_to_analyze}).")
 
-        print(f"  Formatter: Prepared data for {len(limited_coins)} coins (out of {len(market_data)}).")
+        logger.info(f"  Formatter: Prepared data for {len(limited_coins)} coins (out of {len(market_data)} initial from coingecko after filtering).")
         return limited_coins
         
     def process(self, collected_data):

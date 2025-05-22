@@ -1,8 +1,11 @@
 import os
 import json
 import openai
+import logging
 from datetime import datetime
 from tiktoken import encoding_for_model
+
+logger = logging.getLogger(__name__)
 
 class GPTAnalyzer:
     def __init__(self):
@@ -10,9 +13,10 @@ class GPTAnalyzer:
         api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
             self.client = None
-            print("OpenAI API key not found, GPT analysis will be disabled")
+            logger.warning("OpenAI API key not found, GPT analysis will be disabled")
         else:
             self.client = openai.OpenAI(api_key=api_key)
+            logger.info("OpenAI client initialized.")
             
         # Default to GPT-4o mini (almost free) model
         self.model = "gpt-4o-mini"
@@ -37,7 +41,7 @@ class GPTAnalyzer:
                 enc = encoding_for_model("gpt-4") # Use gpt-4 as a fallback encoder
                 return len(enc.encode(text))
             except Exception as e:
-                print(f"Error getting encoder: {e}. Falling back to basic split.")
+                logger.error(f"Error getting token encoder: {e}. Falling back to basic split.", exc_info=True)
                 return len(text.split()) # Basic fallback
 
     def _build_prompt(self, formatted_data):
@@ -108,7 +112,7 @@ Format the output as a valid JSON array.
         # If content exceeds available tokens, we might need to truncate or handle it
         # For now, we'll just print a warning if it's close or over
         if content_tokens >= available_tokens:
-            print(f"⚠️ Warning: Prompt content ({content_tokens} tokens) might exceed model's available limit ({available_tokens} tokens). Consider reducing MAX_COINS_TO_ANALYZE.")
+            logger.warning(f"⚠️ Warning: Prompt content ({content_tokens} tokens) might exceed model's available limit ({available_tokens} tokens). Consider reducing MAX_COINS_TO_ANALYZE.")
             # Simple truncation strategy (if needed, could be more sophisticated)
             # estimated_tokens_per_coin = content_tokens / len(formatted_data)
             # max_coins_for_limit = int(available_tokens / estimated_tokens_per_coin)
@@ -119,16 +123,16 @@ Format the output as a valid JSON array.
     def analyze(self, formatted_data):
         """Analyze formatted data using GPT"""
         if not self.client:
-            print("GPT analysis skipped: OpenAI client not initialized.")
+            logger.warning("GPT analysis skipped: OpenAI client not initialized.")
             return {"error": "OpenAI client not initialized"}
         if not formatted_data:
-            print("GPT analysis skipped: No formatted data provided.")
+            logger.warning("GPT analysis skipped: No formatted data provided.")
             return {"error": "No formatted data provided"}
 
         system_message, prompt_content = self._build_prompt(formatted_data)
 
         try:
-            print(f"  - Sending {len(formatted_data)} coins to {self.model} for analysis...")
+            logger.info(f"  - Sending {len(formatted_data)} coins to {self.model} for analysis...")
             start_time = datetime.now()
 
             response = self.client.chat.completions.create(
@@ -143,17 +147,17 @@ Format the output as a valid JSON array.
 
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
-            print(f"  - GPT response received in {duration:.2f} seconds.")
+            logger.info(f"  - GPT response received in {duration:.2f} seconds.")
 
             # Extract JSON content
             analysis_json_str = response.choices[0].message.content
             analysis_result = json.loads(analysis_json_str)
 
-            # print(f"  - GPT response: {analysis_result}")
+            # logger.debug(f"  - GPT response: {analysis_result}") # Log full response only if needed at debug
 
             # Basic validation of the response structure
             if 'analysis' not in analysis_result or not isinstance(analysis_result['analysis'], list):
-                print("  ❌ Error: GPT response did not contain the expected 'analysis' list.")
+                logger.error("  ❌ Error: GPT response did not contain the expected 'analysis' list.")
                 return {"error": "Invalid response format from GPT", "raw_response": analysis_json_str}
 
             # Add metadata
@@ -171,18 +175,18 @@ Format the output as a valid JSON array.
                      'completion_tokens': response.usage.completion_tokens,
                      'total_tokens': response.usage.total_tokens
                  }
-                 print(f"  - Token Usage: Prompt={response.usage.prompt_tokens}, Completion={response.usage.completion_tokens}, Total={response.usage.total_tokens}")
+                 logger.info(f"  - Token Usage: Prompt={response.usage.prompt_tokens}, Completion={response.usage.completion_tokens}, Total={response.usage.total_tokens}")
 
 
             return result_with_metadata
 
         except openai.APIError as e:
-            print(f"  ❌ OpenAI API Error: {e}")
+            logger.error(f"  ❌ OpenAI API Error: {e}", exc_info=True)
             return {"error": f"OpenAI API Error: {e}"}
         except json.JSONDecodeError as e:
-            print(f"  ❌ Error decoding GPT JSON response: {e}")
-            print(f"  Raw response: {analysis_json_str}")
+            logger.error(f"  ❌ Error decoding GPT JSON response: {e}. Raw response: {analysis_json_str}", exc_info=True)
+            # Avoid printing raw response directly here if it's too large or sensitive, logger.error already has it.
             return {"error": "Failed to decode GPT JSON response", "raw_response": analysis_json_str}
         except Exception as e:
-            print(f"  ❌ An unexpected error occurred during GPT analysis: {e}")
+            logger.error(f"  ❌ An unexpected error occurred during GPT analysis: {e}", exc_info=True)
             return {"error": f"An unexpected error occurred: {e}"} 
