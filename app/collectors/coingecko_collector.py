@@ -1,9 +1,6 @@
 import os
 import time
-import logging
 from pycoingecko import CoinGeckoAPI
-
-logger = logging.getLogger(__name__)
 
 class CoinGeckoCollector:
     def __init__(self):
@@ -16,7 +13,7 @@ class CoinGeckoCollector:
             trending = self.cg.get_search_trending()
             return [coin['item'] for coin in trending['coins']]
         except Exception as e:
-            logger.error(f"Error fetching trending coins: {e}", exc_info=True)
+            print(f"Error fetching trending coins: {e}")
             return []
     
     def get_market_data(self):
@@ -34,11 +31,11 @@ class CoinGeckoCollector:
             # Add a small delay to avoid API rate limiting
             time.sleep(0.5)
 
-            logger.info(f"Fetched market data for {len(market_data)} coins")
+            print(f"Fetched market data for {len(market_data)} coins")
             
             return market_data
         except Exception as e:
-            logger.error(f"Error fetching market data: {e}", exc_info=True)
+            print(f"Error fetching market data: {e}")
             return []
     
     def collect(self):
