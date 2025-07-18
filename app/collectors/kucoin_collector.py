@@ -53,6 +53,7 @@ class KuCoinCollector:
 
             # Convert to DataFrame
             df = pd.DataFrame(klines, columns=['timestamp', 'open', 'close', 'high', 'low', 'amount', 'volume'])
+            
             # Convert timestamp to datetime
             # Convert strings to numeric first
             df['timestamp'] = pd.to_numeric(df['timestamp'])
@@ -66,7 +67,7 @@ class KuCoinCollector:
             df.sort_index(inplace=True)
 
             # Limit data points after sorting
-            df = df.tail(limit + 14) # Keep enough for RSI calculation buffer
+            df = df.tail(limit + 26) # Keep enough for MACD calculation buffer (slow period)
 
             return df
 
@@ -155,8 +156,8 @@ class KuCoinCollector:
             results[symbol] = {'rsi_1d': None, 'rsi_7d': None}
 
             # --- Daily RSI ---
-            # Fetch ~30 days of data for 14-day RSI
-            df_1d = self._get_ohlc(symbol_pair, interval='1day', limit=30)
+            # Fetch ~50 days of data for 14-day RSI
+            df_1d = self._get_ohlc(symbol_pair, interval='1day', limit=50)
             if df_1d is not None:
                 rsi_1d = self._calculate_rsi(df_1d, period=14)
                 results[symbol]['rsi_1d'] = rsi_1d
@@ -170,8 +171,8 @@ class KuCoinCollector:
             time.sleep(0.2)  # Basic rate limiting
 
             # --- Weekly RSI ---
-            # Fetch ~30 weeks of data for 14-week RSI
-            df_1w = self._get_ohlc(symbol_pair, interval='1week', limit=30)
+            # Fetch ~50 weeks of data for 14-week RSI
+            df_1w = self._get_ohlc(symbol_pair, interval='1week', limit=50)
             if df_1w is not None:
                 rsi_7d = self._calculate_rsi(df_1w, period=14)
                 results[symbol]['rsi_7d'] = rsi_7d
