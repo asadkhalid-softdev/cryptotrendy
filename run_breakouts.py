@@ -60,6 +60,7 @@ def buy_analysis():
     
     # Extract coin symbols from CoinGecko data for other collectors
     coin_symbols = [coin.get('symbol', '').upper() for coin in coingecko_data['market_data']]
+    coin_symbols.sort()  # Sort alphabetically
     print(f"  ✓ Found {len(coin_symbols)} coins in market data")
     
     # KuCoin TA data (Conditional)
