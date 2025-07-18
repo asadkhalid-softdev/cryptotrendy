@@ -89,6 +89,52 @@ class KuCoinCollector:
             print(f"    - Error calculating RSI: {e}")
             return None
 
+    def _calculate_macd(self, df, fast=12, slow=26, signal=9):
+        """
+        Calculate MACD using pandas_ta.
+        Returns dict with MACD line, signal line, and histogram values.
+        """
+        if df is None or len(df) < slow:
+            return None
+        try:
+            # Calculate MACD
+            df.ta.macd(fast=fast, slow=slow, signal=signal, append=True)
+
+            # Calculate histogram trend (compare current to previous)
+            if len(df) >= 2:
+                prev_histogram = df[f'MACDh_{fast}_{slow}_{signal}'].iloc[-2]
+                curr_histogram = df[f'MACDh_{fast}_{slow}_{signal}'].iloc[-1]
+                
+                if pd.notna(prev_histogram) and pd.notna(curr_histogram):
+                    if curr_histogram > prev_histogram:
+                        histogram_trend = "increasing"
+                    elif curr_histogram < prev_histogram:
+                        histogram_trend = "decreasing"
+                    else:
+                        histogram_trend = "flat"
+                else:
+                    histogram_trend = None
+            else:
+                histogram_trend = None
+            
+            # Get the latest values
+            macd_line = df[f'MACD_{fast}_{slow}_{signal}'].iloc[-1]
+            macd_histogram = df[f'MACDh_{fast}_{slow}_{signal}'].iloc[-1]
+            macd_signal = df[f'MACDs_{fast}_{slow}_{signal}'].iloc[-1]
+            
+            # Return values if they exist
+            if pd.notna(macd_line) and pd.notna(macd_histogram) and pd.notna(macd_signal):
+                return {
+                    'macd_line': round(macd_line, 6),
+                    'macd_signal': round(macd_signal, 6),
+                    'macd_histogram': round(macd_histogram, 6),
+                    'histogram_trend': histogram_trend
+                }
+            return None
+        except Exception as e:
+            print(f"    - Error calculating MACD: {e}")
+            return None
+
     def collect(self, coin_symbols):
         """
         Fetch OHLC data and calculate RSI for a list of coin symbols.
@@ -115,6 +161,10 @@ class KuCoinCollector:
                 rsi_1d = self._calculate_rsi(df_1d, period=14)
                 results[symbol]['rsi_1d'] = rsi_1d
                 print(f"      - Daily RSI: {rsi_1d}")
+
+                macd_1d = self._calculate_macd(df_1d)
+                results[symbol]['macd_1d'] = macd_1d
+                print(f"      - Daily MACD: {macd_1d}")
             else:
                  print(f"      - Could not fetch daily data or calculate RSI.")
             time.sleep(0.2)  # Basic rate limiting
@@ -126,6 +176,10 @@ class KuCoinCollector:
                 rsi_7d = self._calculate_rsi(df_1w, period=14)
                 results[symbol]['rsi_7d'] = rsi_7d
                 print(f"      - Weekly RSI: {rsi_7d}")
+
+                macd_1w = self._calculate_macd(df_1w)
+                results[symbol]['macd_1w'] = macd_1w
+                print(f"      - Weekly MACD: {macd_1w}")
             else:
                 print(f"      - Could not fetch weekly data or calculate RSI.")
             time.sleep(0.2)  # Basic rate limiting

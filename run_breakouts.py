@@ -23,13 +23,6 @@ social_media = SocialMediaCollector()
 kucoin_collector = KuCoinCollector()
 telegram_sender = TelegramSender()
 
-# At top of run.py or in a config module
-RSI_SELL_1D_THRESHOLD = int(os.getenv('RSI_SELL_1D_THRESHOLD', '80'))
-RSI_SELL_7D_THRESHOLD = int(os.getenv('RSI_SELL_7D_THRESHOLD', '70'))
-
-print(f"RSI_SELL_1D_THRESHOLD: {RSI_SELL_1D_THRESHOLD}")
-print(f"RSI_SELL_7D_THRESHOLD: {RSI_SELL_7D_THRESHOLD}")
-
 def buy_analysis():
     """Main function to orchestrate the crypto analysis pipeline"""
     start_time = time.time()
