@@ -49,14 +49,14 @@ def current_asset_analysis():
     for sym, metrics in ku_data.items():
         r1 = metrics.get('rsi_1d')
         r7 = metrics.get('rsi_7d')
-        if r1 is not None and r7 is not None and r1 > RSI_SELL_1D_THRESHOLD and r7 > RSI_SELL_7D_THRESHOLD:
+        if r1 >= RSI_SELL_1D_THRESHOLD and r7 >= RSI_SELL_7D_THRESHOLD:
             notification_list.append({'symbol': sym, 'rsi_1d': r1, 'rsi_7d': r7})
 
     if not notification_list:
         print("No symbols with both RSI_1d and RSI_7d > thresholds found.")
         return
     # Build notification message
-    message = "*🚨 RSI Alert: KuCoin Overbought Signals 🚨*\n\n"
+    message = "*🚨 SELL Alert: KuCoin Overbought Signals 🚨*\n\n"
     for item in notification_list:
         message += f"*{item['symbol']}* - RSI 1D: {item['rsi_1d']}, RSI 7D: {item['rsi_7d']}\n"
     message += "\n_This is an automated alert by your script._"

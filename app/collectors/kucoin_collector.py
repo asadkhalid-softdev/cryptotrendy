@@ -5,13 +5,6 @@ import pandas_ta as ta
 from datetime import datetime, timedelta
 from kucoin.client import Market
 
-# At top of run.py or in a config module
-RSI_BUY_1D_THRESHOLD = int(os.getenv('RSI_BUY_1D_THRESHOLD', '50'))
-RSI_BUY_7D_THRESHOLD = int(os.getenv('RSI_BUY_7D_THRESHOLD', '50'))
-
-print(f"RSI_BUY_1D_THRESHOLD: {RSI_BUY_1D_THRESHOLD}")
-print(f"RSI_BUY_7D_THRESHOLD: {RSI_BUY_7D_THRESHOLD}")
-
 class KuCoinCollector:
     def __init__(self):
         """Initialize KuCoin client and settings."""
@@ -161,11 +154,11 @@ class KuCoinCollector:
             if df_1d is not None:
                 rsi_1d = self._calculate_rsi(df_1d, period=14)
                 results[symbol]['rsi_1d'] = rsi_1d
-                print(f"      - Daily RSI: {rsi_1d}")
+                # print(f"      - Daily RSI: {rsi_1d}")
 
                 macd_1d = self._calculate_macd(df_1d)
                 results[symbol]['macd_1d'] = macd_1d
-                print(f"      - Daily MACD: {macd_1d}")
+                # print(f"      - Daily MACD: {macd_1d}")
             else:
                  print(f"      - Could not fetch daily data or calculate RSI.")
             time.sleep(0.2)  # Basic rate limiting
@@ -176,11 +169,11 @@ class KuCoinCollector:
             if df_1w is not None:
                 rsi_7d = self._calculate_rsi(df_1w, period=14)
                 results[symbol]['rsi_7d'] = rsi_7d
-                print(f"      - Weekly RSI: {rsi_7d}")
+                # print(f"      - Weekly RSI: {rsi_7d}")
 
                 macd_1w = self._calculate_macd(df_1w)
                 results[symbol]['macd_1w'] = macd_1w
-                print(f"      - Weekly MACD: {macd_1w}")
+                # print(f"      - Weekly MACD: {macd_1w}")
             else:
                 print(f"      - Could not fetch weekly data or calculate RSI.")
             time.sleep(0.2)  # Basic rate limiting
@@ -190,10 +183,11 @@ class KuCoinCollector:
                 or (results[symbol]['rsi_7d'] is None)):
                 print(f"      - Filtering out {symbol} (1d: {results[symbol]['rsi_1d']}, 7d: {results[symbol]['rsi_7d']})")
                 del results[symbol]
-            elif ((results[symbol]['rsi_1d'] > RSI_BUY_1D_THRESHOLD)
-                or (results[symbol]['rsi_7d'] > RSI_BUY_7D_THRESHOLD)):
-                print(f"      - Filtering out {symbol} (1d: {results[symbol]['rsi_1d']}, 7d: {results[symbol]['rsi_7d']})")
-                del results[symbol]
+            else:
+                print(f"      - {symbol}")
+                print(f"        - {results[symbol]}")
+                
+            print("--------------------------------")
 
         print("  ✓ KuCoin TA data collection complete.")
         return results 

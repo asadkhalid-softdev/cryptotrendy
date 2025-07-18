@@ -23,6 +23,13 @@ social_media = SocialMediaCollector()
 kucoin_collector = KuCoinCollector()
 telegram_sender = TelegramSender()
 
+# At top of run.py or in a config module
+RSI_BUY_1D_THRESHOLD = int(os.getenv('RSI_BUY_1D_THRESHOLD', '50'))
+RSI_BUY_7D_THRESHOLD = int(os.getenv('RSI_BUY_7D_THRESHOLD', '50'))
+
+print(f"RSI_BUY_1D_THRESHOLD: {RSI_BUY_1D_THRESHOLD}")
+print(f"RSI_BUY_7D_THRESHOLD: {RSI_BUY_7D_THRESHOLD}")
+
 def buy_analysis():
     """Main function to orchestrate the crypto analysis pipeline"""
     start_time = time.time()
@@ -61,12 +68,20 @@ def buy_analysis():
         kucoin_data = kucoin_collector.collect(coin_symbols)
     else:
         print("  - KuCoin TA is disabled via environment variable.")
+
+    original_count = len(coin_symbols)
+    coins_filtered = []
+    for sym, metrics in kucoin_data.items():
+        r1 = metrics.get('rsi_1d')
+        r7 = metrics.get('rsi_7d')
+        if r1 < RSI_BUY_1D_THRESHOLD and r7 < RSI_BUY_7D_THRESHOLD:
+            coins_filtered.append(sym)
+    
+    coin_symbols = [symbol for symbol in coin_symbols if symbol in coins_filtered]
+    print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
     
     # Filter coin_symbols to only those present in kucoin_data if KuCoin TA is enabled
     if enable_kucoin_ta:
-        original_count = len(coin_symbols)
-        coin_symbols = [symbol for symbol in coin_symbols if symbol in kucoin_data]
-        print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
         # Filter CoinGecko market_data to include only symbols present in KuCoin data
         coingecko_data['market_data'] = [entry for entry in coingecko_data['market_data'] if entry.get('symbol', '').upper() in coin_symbols]
         print(f"  ✓ {len(coingecko_data['market_data'])} CoinGecko entries remain after KuCoin filter")
