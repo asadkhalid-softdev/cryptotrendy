@@ -9,6 +9,9 @@ from kucoin.client import Market
 RSI_BUY_1D_THRESHOLD = int(os.getenv('RSI_BUY_1D_THRESHOLD', '50'))
 RSI_BUY_7D_THRESHOLD = int(os.getenv('RSI_BUY_7D_THRESHOLD', '50'))
 
+print(f"RSI_BUY_1D_THRESHOLD: {RSI_BUY_1D_THRESHOLD}")
+print(f"RSI_BUY_7D_THRESHOLD: {RSI_BUY_7D_THRESHOLD}")
+
 class KuCoinCollector:
     def __init__(self):
         """Initialize KuCoin client and settings."""
@@ -99,6 +102,7 @@ class KuCoinCollector:
 
         # Assume USDT pairing for simplicity. This might need refinement.
         # Consider adding error handling or logic for different base pairs if needed.
+
         for symbol in coin_symbols:
             symbol_pair = f"{symbol.upper()}-USDT"
             print(f"    - Processing {symbol_pair}...")

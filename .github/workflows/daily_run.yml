@@ -49,11 +49,11 @@ jobs:
 
         CURRENT_ASSET_SHEET_ID: ${{ secrets.CURRENT_ASSET_SHEET_ID }}
 
-        RSI_SELL_1D_THRESHOLD: 80
-        RSI_SELL_7D_THRESHOLD: 70
+        RSI_SELL_1D_THRESHOLD: ${{ vars.RSI_SELL_1D_THRESHOLD || '75' }}
+        RSI_SELL_7D_THRESHOLD: ${{ vars.RSI_SELL_7D_THRESHOLD || '75' }}
 
-        RSI_BUY_1D_THRESHOLD: 60
-        RSI_BUY_7D_THRESHOLD: 70
+        RSI_BUY_1D_THRESHOLD: ${{ vars.RSI_BUY_1D_THRESHOLD || '70' }}
+        RSI_BUY_7D_THRESHOLD: ${{ vars.RSI_BUY_7D_THRESHOLD || '60' }}
 
         # Configuration Settings (Match .env.example)
         TOP_COINS_LIMIT: 100
