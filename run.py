@@ -30,7 +30,7 @@ RSI_SELL_7D_THRESHOLD = int(os.getenv('RSI_SELL_7D_THRESHOLD', '70'))
 print(f"RSI_SELL_1D_THRESHOLD: {RSI_SELL_1D_THRESHOLD}")
 print(f"RSI_SELL_7D_THRESHOLD: {RSI_SELL_7D_THRESHOLD}")
 
-def main():
+def buy_analysis():
     """Main function to orchestrate the crypto analysis pipeline"""
     start_time = time.time()
     print(f"🔍 Starting crypto signal analysis - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -199,5 +199,5 @@ def current_asset_analysis():
         print("Failed to send Telegram notification.") 
     
 if __name__ == "__main__":
-    main()
+    buy_analysis()
     current_asset_analysis()
