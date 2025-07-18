@@ -105,17 +105,24 @@ This document provides instructions on how to set up and run the CryptoTrendy an
 ## Using GitHub Actions (Automated Workflow)
 
 1.  **Fork/Clone the Repository:** Ensure the repository is in your GitHub account.
-2.  **Configure Secrets:**
+2.  **Configure Secrets and Variables:**
     *   Go to your repository's `Settings` > `Secrets and variables` > `Actions`.
-    *   Add the required API keys as repository secrets. The names must match those expected by the workflow file (`.github/workflows/daily_run.yml`) and your `.env` file:
+    *   Add the required API keys as repository secrets. The names must match those expected by the workflow files and your `.env` file:
         *   `OPENAI_API_KEY`
         *   `TELEGRAM_BOT_TOKEN`
         *   `TELEGRAM_CHAT_ID`
         *   **(Optional)** `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`
-        *   **(Optional)** `KUCOIN_API_KEY`, `KUCOIN_API_SECRET`, `KUCOIN_API_PASSPHRASE` (only needed if you intend the action to run with `ENABLE_KUCOIN_TA=true` - you might need to modify the workflow file to set this env var). *Note: The current workflow file sets `ENABLE_KUCOIN_TA=false` directly.*
+        *   **(Optional)** `KUCOIN_API_KEY`, `KUCOIN_API_SECRET`, `KUCOIN_API_PASSPHRASE` (required for assets analysis workflow)
+    *   **Configure Repository Variables** (optional, with defaults):
+        *   Go to the `Variables` tab and add:
+        *   `RSI_SELL_1D_THRESHOLD` (default: 75) - 1-day RSI threshold for sell signals
+        *   `RSI_SELL_7D_THRESHOLD` (default: 75) - 7-day RSI threshold for sell signals  
+        *   `RSI_BUY_1D_THRESHOLD` (default: 70) - 1-day RSI threshold for buy signals
+        *   `RSI_BUY_7D_THRESHOLD` (default: 60) - 7-day RSI threshold for buy signals
     *   Ensure the secrets contain the correct values.
 3.  **Enable Actions:** Ensure GitHub Actions are enabled for your repository (`Settings` > `Actions` > `General`).
-4.  **Triggering the Workflow:**
-    *   The workflow is configured to run on a schedule (e.g., daily at 07:00 UTC).
-    *   You can also trigger it manually from the `Actions` tab in your GitHub repository (select the "Daily Crypto Signal Analysis" workflow and click "Run workflow").
+4.  **Triggering the Workflows:**
+    *   **Assets Analysis**: Runs every 4 hours to monitor existing assets for overbought signals.
+    *   **Breakouts Analysis**: Runs daily at 07:00 UTC for full market analysis and breakout opportunities.
+    *   You can also trigger either workflow manually from the `Actions` tab in your GitHub repository.
 5.  **Check Results:** The workflow should commit the updated `cryptos.xlsx` back to the repository and send Telegram alerts as configured. Check the Actions logs for details if issues occur. 

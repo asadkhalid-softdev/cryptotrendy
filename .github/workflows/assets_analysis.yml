@@ -1,4 +1,4 @@
-name: Crypto Signal Analysis (Every 4 Hours)
+name: Assets Analysis (Every 4 Hours)
 
 on:
   schedule:
@@ -7,19 +7,17 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
-  analyze:
+  analyze_assets:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3 # Or consider updating to @v4 if compatible with other actions
+      uses: actions/checkout@v3
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v5 # Using latest stable version
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-
-    # Removed the 'Setup uv' step
 
     - name: Install dependencies using pip and venv
       run: |
@@ -28,43 +26,27 @@ jobs:
         python -m pip install --upgrade pip # Upgrade pip within the venv
         pip install -r requirements.txt # Install dependencies from requirements.txt
 
-    - name: Run analysis
+    - name: Run assets analysis
       env:
         # Core Secrets (Required)
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        MAX_COINS_TO_ANALYZE: 100
-
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        MAX_COINS_TELEGRAM: 10
 
-        # Optional Secrets (Needed for specific collectors)
-        REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-        REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-
+        # KuCoin API (Required for assets analysis)
         ENABLE_KUCOIN_TA: true
         KUCOIN_API_KEY: ${{ secrets.KUCOIN_API_KEY }}
         KUCOIN_API_SECRET: ${{ secrets.KUCOIN_API_SECRET }}
         KUCOIN_API_PASSPHRASE: ${{ secrets.KUCOIN_API_PASSPHRASE }}
 
+        # Google Sheet for current assets
         CURRENT_ASSET_SHEET_ID: ${{ secrets.CURRENT_ASSET_SHEET_ID }}
 
+        # RSI Thresholds
         RSI_SELL_1D_THRESHOLD: ${{ vars.RSI_SELL_1D_THRESHOLD || '75' }}
         RSI_SELL_7D_THRESHOLD: ${{ vars.RSI_SELL_7D_THRESHOLD || '75' }}
 
-        RSI_BUY_1D_THRESHOLD: ${{ vars.RSI_BUY_1D_THRESHOLD || '70' }}
-        RSI_BUY_7D_THRESHOLD: ${{ vars.RSI_BUY_7D_THRESHOLD || '60' }}
-
-        # Configuration Settings (Match .env.example)
-        TOP_COINS_LIMIT: 100
+        # Configuration Settings
         DEVELOPMENT_MODE: false
-        SKIP_GPT: false
       run: |
         source .venv/bin/activate    # Activate venv again for this step
-        python run.py                # Run the script using the venv's Python
-
-    - name: Upload Excel file as artifact
-      uses: actions/upload-artifact@v4 # Using latest stable version
-      with:
-        name: crypto-signals
-        path: cryptos.xlsx
+        python run_assets.py         # Run the assets analysis script 
