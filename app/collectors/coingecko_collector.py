@@ -61,5 +61,6 @@ if __name__ == "__main__":
     coingecko_data = coingecko.collect()
     coin_symbols = [coin.get('symbol', '').upper() for coin in coingecko_data['market_data']]
     print(coin_symbols)
-    trending_coins = pd.DataFrame(coingecko_data['market_data'])
-    print(trending_coins)
+    market_coins = pd.DataFrame(coingecko_data['market_data'])
+    print(market_coins)
+    print(market_coins.columns)

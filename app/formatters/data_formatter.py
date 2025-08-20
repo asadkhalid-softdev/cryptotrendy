@@ -123,34 +123,17 @@ class DataFormatter:
             print("  Formatter: No market data found.")
             return []
 
-        # Create a set of trending coin symbols for quick lookup
-        trending_symbols = {
-            coin['symbol'].upper()
-            for coin in trending_coins
-        }
-
         # Create merged data
         merged_coins = []
         for coin in market_data:
-            symbol = coin.get('symbol', '').upper()
+            coin['symbol'] = coin['symbol'].upper()
+            
+            symbol = coin.get('symbol', '')
             if not symbol:
                 continue
-
-            # Basic coin info from CoinGecko
-            coin_info = {
-                'symbol': symbol,
-                'name': coin.get('name'),
-                'price': coin.get('current_price'),
-                'market_cap': coin.get('market_cap'),
-                'market_cap_rank': coin.get('market_cap_rank'),
-                'volume_24h': coin.get('total_volume'),
-                'price_change_24h': coin.get('price_change_percentage_24h'),
-                'price_change_7d': coin.get('price_change_percentage_7d_in_currency'),
-                'is_trending': symbol in trending_symbols
-            }
-
-            # if not coin_info.get('is_trending'):
-            #     continue
+            
+            coin_info = coin.copy()
+            
 
             # Add social data if available
             coin_social = social_data.get(symbol, {})
@@ -159,21 +142,21 @@ class DataFormatter:
             # Add KuCoin RSI data if available
             coin_kucoin = kucoin_data.get(symbol, {})
 
-            coin_info['rsi_1d'] = coin_kucoin.get('rsi_1d') # Will be None if not found/calculated
-            coin_info['rsi_7d'] = coin_kucoin.get('rsi_7d') # Will be None if not found/calculated
-
-            # --- Data Cleaning/Normalization (Optional but Recommended) ---
-            # Example: Ensure numeric types, handle None values for GPT
-            for key in ['price', 'market_cap', 'volume_24h', 'price_change_24h', 'price_change_7d', 'rsi_1d', 'rsi_7d']:
-                if coin_info[key] is None or not isinstance(coin_info[key], (int, float)):
-                    coin_info[key] = 'N/A' # Use 'N/A' string for GPT if data is missing
+            if coin_kucoin:
+                coin_info['rsi_1d'] = coin_kucoin.get('rsi_1d') # Will be None if not found/calculated
+                coin_info['rsi_7d'] = coin_kucoin.get('rsi_7d') # Will be None if not found/calculated
 
             merged_coins.append(coin_info)
 
         # --- Filtering/Ranking before sending to GPT (Optional) ---
         # Example: Prioritize trending coins or coins with high volume change
         # For now, just limit the number of coins based on market cap rank
-        merged_coins.sort(key=lambda x: x.get('market_cap_rank') or float('inf')) # Sort by rank, handle None
+        merged_coins.sort(key=lambda x: x.get('social_mentions', 0), reverse=True) # Sort by social mentions in descending order
+        
+        # Filter out coins with no social mentions
+        merged_coins = [coin for coin in merged_coins if coin.get('social_mentions', 0) > 10] # greater than 10 mentions
+        print(f"  Formatter: Filtered to {len(merged_coins)} coins with social mentions.")
+
         limited_coins = merged_coins[:self.max_coins_to_analyze]
         print(f"  Formatter: Limited coins to {len(limited_coins)}.")
 

@@ -32,17 +32,17 @@ jobs:
       env:
         # Core Secrets (Required)
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        MAX_COINS_TO_ANALYZE: 100
+        MAX_COINS_TO_ANALYZE: ${{ vars.MAX_COINS_TO_ANALYZE || '50' }}
 
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        MAX_COINS_TELEGRAM: 10
+        MAX_COINS_TELEGRAM: ${{ vars.MAX_COINS_TELEGRAM || '10' }}
 
         # Optional Secrets (Needed for specific collectors)
         REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
         REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
 
-        ENABLE_KUCOIN_TA: true
+        ENABLE_KUCOIN_TA: ${{ vars.ENABLE_KUCOIN_TA || 'false' }}
         KUCOIN_API_KEY: ${{ secrets.KUCOIN_API_KEY }}
         KUCOIN_API_SECRET: ${{ secrets.KUCOIN_API_SECRET }}
         KUCOIN_API_PASSPHRASE: ${{ secrets.KUCOIN_API_PASSPHRASE }}
@@ -53,9 +53,9 @@ jobs:
         RSI_BUY_7D_THRESHOLD: ${{ vars.RSI_BUY_7D_THRESHOLD || '60' }}
 
         # Configuration Settings (Match .env.example)
-        TOP_COINS_LIMIT: 100
+        TOP_COINS_LIMIT: ${{ vars.TOP_COINS_LIMIT || '100' }}
         DEVELOPMENT_MODE: false
-        SKIP_GPT: false
+        SKIP_GPT: ${{ vars.SKIP_GPT || 'false' }}
       run: |
         source .venv/bin/activate    # Activate venv again for this step
         python run_breakouts.py             # Run the breakouts analysis script

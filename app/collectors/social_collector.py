@@ -119,7 +119,7 @@ class SocialMediaCollector:
         # Print the keys and content of the 'coin_mentions' dictionary within the result
         mentions_to_return = result.get('coin_mentions', {})
         print("DEBUG (SocialCollector): Returning social_data keys:", mentions_to_return.keys())
-        print("DEBUG (SocialCollector): Returning social_data content:", mentions_to_return)
+        # print("DEBUG (SocialCollector): Returning social_data content:", mentions_to_return)
         # --- END DEBUG PRINTS ---
 
         return result 

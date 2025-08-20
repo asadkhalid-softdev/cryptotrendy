@@ -70,19 +70,20 @@ def buy_analysis():
     else:
         print("  - KuCoin TA is disabled via environment variable.")
 
-    original_count = len(coin_symbols)
-    coins_filtered = []
-    for sym, metrics in kucoin_data.items():
-        r1 = metrics.get('rsi_1d')
-        r7 = metrics.get('rsi_7d')
-        if r1 < RSI_BUY_1D_THRESHOLD and r7 < RSI_BUY_7D_THRESHOLD:
-            coins_filtered.append(sym)
-    
-    coin_symbols = [symbol for symbol in coin_symbols if symbol in coins_filtered]
-    print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
-    
-    # Filter coin_symbols to only those present in kucoin_data if KuCoin TA is enabled
     if enable_kucoin_ta:
+        print("  - KuCoin TA is enabled via environment variable.")
+        original_count = len(coin_symbols)
+        coins_filtered = []
+        for sym, metrics in kucoin_data.items():
+            r1 = metrics.get('rsi_1d', 100)
+            r7 = metrics.get('rsi_7d', 100)
+            if r1 < RSI_BUY_1D_THRESHOLD and r7 < RSI_BUY_7D_THRESHOLD:
+                coins_filtered.append(sym)
+        
+        # Filter coin_symbols to only those present in kucoin_data if KuCoin TA is enabled
+        coin_symbols = [symbol for symbol in coin_symbols if symbol in coins_filtered]
+        print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
+        
         # Filter CoinGecko market_data to include only symbols present in KuCoin data
         coingecko_data['market_data'] = [entry for entry in coingecko_data['market_data'] if entry.get('symbol', '').upper() in coin_symbols]
         print(f"  ✓ {len(coingecko_data['market_data'])} CoinGecko entries remain after KuCoin filter")
