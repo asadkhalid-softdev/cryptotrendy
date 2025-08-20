@@ -2,6 +2,7 @@ import os
 import asyncio
 from telegram import Bot
 from datetime import datetime
+import pandas as pd
 
 class TelegramSender:
     def __init__(self):
@@ -30,15 +31,12 @@ class TelegramSender:
         """Send message (synchronous wrapper)"""
         return asyncio.run(self.send_message_async(message))
         
-    def format_analysis_for_telegram(self, analysis_result):
+    def format_analysis_for_telegram(self, analysis_result, coingecko_data, social_mentions_data, kucoin_data):
         """Format analysis results for Telegram message"""
         if not analysis_result or 'analysis' not in analysis_result:
             return "No analysis data available to send."
             
         analysis_data = analysis_result['analysis']
-        
-        if not analysis_data:
-            return "Analysis completed but no results found."
             
         # Sort by breakout score (descending)
         if isinstance(analysis_data, list):
@@ -47,27 +45,44 @@ class TelegramSender:
         else:
             # Single coin case
             top_coins = [analysis_data]
+        
+        top_symbols = [i.get('coin_symbol', '').upper() for i in top_coins]
+
+        coingecko_data = [i for i in coingecko_data['market_data'] if i.get('symbol', '').upper() in top_symbols]
+        coingecko_data = {item.get('symbol', '').upper(): item for item in coingecko_data}
+        
+        if not analysis_data:
+            return "Analysis completed but no results found."
             
         # Format message
         date_str = datetime.now().strftime('%Y-%m-%d')
         message = f"*🚀 CRYPTO BREAKOUT POTENTIAL: {date_str} 🚀*\n\n"
         
         for i, coin in enumerate(top_coins, 1):
-            symbol = coin.get('coin_symbol', '')
+            symbol = coin.get('coin_symbol', '').upper()
             score = coin.get('breakout_score', 0)
             reason = coin.get('reason', '').replace('\n', ' ')
-            # Extract RSI values
-            rsi_1d = coin.get('rsi_1d', 'N/A')
-            rsi_7d = coin.get('rsi_7d', 'N/A')
-            
-            message += f"*{i}. {symbol}* - Score: {score}/10 \n RSI 1D: {rsi_1d}, 7D: {rsi_7d}\n"
-            message += f"_{reason}_\n\n"
+
+            coingecko_data_item = coingecko_data.get(symbol, {})
+            social_mentions_data_item = social_mentions_data.get(symbol, {})
+            kucoin_data_item = kucoin_data.get(symbol, {})
+
+            social_mentions = social_mentions_data_item.get('reddit_mentions', 0)
+            current_price = round(coingecko_data_item.get('current_price', 0), 4)
+            price_change_24h = round(coingecko_data_item.get('price_change_percentage_24h', 0), 2)
+            price_change_7d = round(coingecko_data_item.get('price_change_percentage_7d_in_currency', 0), 2)
+            is_trending = coingecko_data_item.get('is_trending', False)
+
+            message += f"*{i}. {symbol} - Score: {score}/10* \
+                \n Social Mentions: {social_mentions} | Trending: {'Yes' if is_trending else 'No'} \
+                \n Price: ${current_price} | 24H: {price_change_24h}% | 7D: {price_change_7d}% \
+                \n _{reason}_\n\n"
             
         message += "\n_This is an automated analysis and not financial advice._"
         
         return message
         
-    def send_analysis(self, analysis_result):
+    def send_analysis(self, analysis_result, coingecko_data, social_mentions_data, kucoin_data):
         """Format and send analysis results via Telegram"""
-        message = self.format_analysis_for_telegram(analysis_result)
+        message = self.format_analysis_for_telegram(analysis_result, coingecko_data, social_mentions_data, kucoin_data)
         return self.send_message(message) 

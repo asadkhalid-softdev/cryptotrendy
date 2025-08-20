@@ -161,7 +161,7 @@ Format the output as a valid JSON array.
                 'timestamp': datetime.now().isoformat(),
                 'model_used': self.model,
                 'analysis_time_seconds': duration,
-                'analysis': analysis_result['analysis'] # Extract just the list
+                'analysis': analysis_result['analysis'], # Extract just the list,
             }
 
             # Optional: Add token usage if available in response object

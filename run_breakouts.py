@@ -15,7 +15,6 @@ from app.collectors.social_collector import SocialMediaCollector
 from app.collectors.kucoin_collector import KuCoinCollector
 from app.formatters.data_formatter import DataFormatter
 from app.analysis.gpt_analyzer import GPTAnalyzer
-from app.output.excel_exporter import ExcelExporter
 from app.output.telegram_sender import TelegramSender
 
 coingecko = CoinGeckoCollector()
@@ -135,27 +134,8 @@ def buy_analysis():
         entry['rsi_1d'] = metrics.get('rsi_1d')
         entry['rsi_7d'] = metrics.get('rsi_7d')
     
-    # 4. Output results
-    print("\n📤 Exporting results...")
-    
-    # Prepare raw data bundle for Excel export
-    raw_data_bundle = {
-        'coingecko': coingecko_data,
-        'social': social_data_full,
-        'kucoin': kucoin_data,
-        'formatted_for_gpt': formatted_data
-    }
-    
-    # Save to Excel
-    exporter = ExcelExporter()
-    save_status = exporter.save_analysis(analysis_result, raw_data=raw_data_bundle)
-    if save_status:
-        print(f"  ✓ Results saved to {exporter.output_file}")
-    else:
-        print(f"  ❌ Failed to save results to Excel.")
-    
     # Send to Telegram
-    send_status = telegram_sender.send_analysis(analysis_result)
+    send_status = telegram_sender.send_analysis(analysis_result, coingecko_data, social_mentions_data, kucoin_data)
     if send_status:
         print("  ✓ Telegram notification sent successfully.")
     else:

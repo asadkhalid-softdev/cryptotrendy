@@ -35,11 +35,13 @@ def current_asset_analysis():
     except Exception as e:
         print(f"Error fetching Google Sheet: {e}")
         return
+    
     # Locate 'Symbols' column
     col_symbols = next((col for col in df_sheet.columns if col.lower() == 'symbols'), None)
     if col_symbols is None:
         print("No 'Symbols' column found in Google Sheet.")
         return
+    
     symbols = df_sheet[col_symbols].dropna().astype(str).str.upper().tolist()
     print(f"Fetched {len(symbols)} symbols from Google Sheet.")
     # Fetch RSI data from KuCoin

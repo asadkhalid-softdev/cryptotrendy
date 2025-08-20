@@ -89,12 +89,6 @@ graph LR
 
 ### 4. 📊 Output Layer (`app/output/`)
 
--   **`ExcelExporter`**:
-    -   Takes the analysis results and the raw collected/formatted data bundle.
-    -   Merges analysis scores/reasons with the formatted input data (including **RSI**) for a comprehensive 'Analysis' sheet.
-    -   Saves the raw data bundle (serialized) to a 'RawData' sheet.
-    -   Writes to `cryptos.xlsx` with timestamped sheet names.
-
 -   **`TelegramSender`**:
     -   Formats the top N analysis results into a concise message.
     -   Sends the message via the configured Telegram bot.
