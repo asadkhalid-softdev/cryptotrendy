@@ -48,3 +48,4 @@ logs/
 
 # Jupyter Notebook
 .ipynb_checkpoints 
+per_diff.py

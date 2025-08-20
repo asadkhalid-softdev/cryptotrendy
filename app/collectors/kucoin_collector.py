@@ -45,7 +45,7 @@ class KuCoinCollector:
                 return None
 
             # Convert to DataFrame
-            df = pd.DataFrame(klines, columns=['timestamp', 'open', 'close', 'high', 'low', 'amount', 'volume'])
+            df = pd.DataFrame(klines, columns=['timestamp', 'open', 'close', 'high', 'low', 'volume', 'amount'])
             
             # Convert timestamp to datetime
             # Convert strings to numeric first
@@ -98,6 +98,7 @@ class KuCoinCollector:
             if len(df) >= 2:
                 prev_histogram = df[f'MACDh_{fast}_{slow}_{signal}'].iloc[-2]
                 curr_histogram = df[f'MACDh_{fast}_{slow}_{signal}'].iloc[-1]
+                histogram_percentage_diff = (curr_histogram - prev_histogram) / prev_histogram * 100
                 
                 if pd.notna(prev_histogram) and pd.notna(curr_histogram):
                     if curr_histogram > prev_histogram:
@@ -122,7 +123,8 @@ class KuCoinCollector:
                     'macd_line': round(macd_line, 6),
                     'macd_signal': round(macd_signal, 6),
                     'macd_histogram': round(macd_histogram, 6),
-                    'histogram_trend': histogram_trend
+                    'histogram_trend': histogram_trend,
+                    'histogram_percentage_diff': round(histogram_percentage_diff, 2)
                 }
             return None
         except Exception as e:
@@ -186,7 +188,7 @@ class KuCoinCollector:
             else:
                 print(f"      - {symbol}")
                 print(f"        - {results[symbol]}")
-                
+
             print("--------------------------------")
 
         print("  ✓ KuCoin TA data collection complete.")

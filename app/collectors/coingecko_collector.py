@@ -54,3 +54,12 @@ class CoinGeckoCollector:
             'trending_coins': trending_coins,
             'market_data': market_data
         } 
+    
+if __name__ == "__main__":
+    import pandas as pd
+    coingecko = CoinGeckoCollector()
+    coingecko_data = coingecko.collect()
+    coin_symbols = [coin.get('symbol', '').upper() for coin in coingecko_data['market_data']]
+    print(coin_symbols)
+    trending_coins = pd.DataFrame(coingecko_data['market_data'])
+    print(trending_coins)
