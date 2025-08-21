@@ -133,7 +133,6 @@ class DataFormatter:
                 continue
             
             coin_info = coin.copy()
-            
 
             # Add social data if available
             coin_social = social_data.get(symbol, {})
@@ -143,8 +142,8 @@ class DataFormatter:
             coin_kucoin = kucoin_data.get(symbol, {})
 
             if coin_kucoin:
-                coin_info['rsi_1d'] = coin_kucoin.get('rsi_1d') # Will be None if not found/calculated
-                coin_info['rsi_7d'] = coin_kucoin.get('rsi_7d') # Will be None if not found/calculated
+                coin_info['rsi_1d'] = coin_kucoin.get('rsi_1d', 'n/a') # Will be None if not found/calculated
+                coin_info['rsi_7d'] = coin_kucoin.get('rsi_7d', 'n/a') # Will be None if not found/calculated
 
             merged_coins.append(coin_info)
 

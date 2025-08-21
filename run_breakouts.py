@@ -68,25 +68,7 @@ def buy_analysis():
         kucoin_data = kucoin_collector.collect(coin_symbols)
     else:
         print("  - KuCoin TA is disabled via environment variable.")
-
-    if enable_kucoin_ta:
-        print("  - KuCoin TA is enabled via environment variable.")
-        original_count = len(coin_symbols)
-        coins_filtered = []
-        for sym, metrics in kucoin_data.items():
-            r1 = metrics.get('rsi_1d', 100)
-            r7 = metrics.get('rsi_7d', 100)
-            if r1 < RSI_BUY_1D_THRESHOLD and r7 < RSI_BUY_7D_THRESHOLD:
-                coins_filtered.append(sym)
-        
-        # Filter coin_symbols to only those present in kucoin_data if KuCoin TA is enabled
-        coin_symbols = [symbol for symbol in coin_symbols if symbol in coins_filtered]
-        print(f"  ✓ {len(coin_symbols)} coins remain after KuCoin filter (from {original_count})")
-        
-        # Filter CoinGecko market_data to include only symbols present in KuCoin data
-        coingecko_data['market_data'] = [entry for entry in coingecko_data['market_data'] if entry.get('symbol', '').upper() in coin_symbols]
-        print(f"  ✓ {len(coingecko_data['market_data'])} CoinGecko entries remain after KuCoin filter")
-    
+ 
     # Social media data
     print("  - Fetching social media mentions...")
     social_data_full = social_media.collect(coin_symbols)
@@ -126,13 +108,6 @@ def buy_analysis():
             'model_used': 'skipped',
             'analysis': [{'coin_symbol': coin.get('symbol'), 'breakout_score': '0', 'reason': 'GPT analysis skipped'} for coin in formatted_data]
         }
-    
-    # Enrich analysis results with RSI data
-    for entry in analysis_result.get('analysis', []):
-        symbol = entry.get('coin_symbol')
-        metrics = kucoin_data.get(symbol, {})
-        entry['rsi_1d'] = metrics.get('rsi_1d')
-        entry['rsi_7d'] = metrics.get('rsi_7d')
     
     # Send to Telegram
     send_status = telegram_sender.send_analysis(analysis_result, coingecko_data, social_mentions_data, kucoin_data)

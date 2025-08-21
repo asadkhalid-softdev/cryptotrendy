@@ -6,12 +6,15 @@ from datetime import datetime, timedelta
 from kucoin.client import Market
 
 class KuCoinCollector:
-    def __init__(self):
+    def __init__(self, enabled=None):
         """Initialize KuCoin client and settings."""
         self.api_key = os.getenv('KUCOIN_API_KEY')
         self.api_secret = os.getenv('KUCOIN_API_SECRET')
         self.api_passphrase = os.getenv('KUCOIN_API_PASSPHRASE')
-        self.enabled = os.getenv('ENABLE_KUCOIN_TA', 'false').lower() == 'true'
+        if enabled is None:
+            self.enabled = os.getenv('ENABLE_KUCOIN_TA', 'false').lower() == 'true'
+        else:
+            self.enabled = enabled
 
         if self.enabled:
             # Initialize Market client (doesn't require authentication for public endpoints)
@@ -193,3 +196,9 @@ class KuCoinCollector:
 
         print("  ✓ KuCoin TA data collection complete.")
         return results 
+    
+if __name__ == "__main__":
+    kucoin = KuCoinCollector(enabled=True)
+    symbols = ["XRP"]
+    kucoin_data = kucoin.collect(symbols)
+    print(kucoin_data["XRP"])

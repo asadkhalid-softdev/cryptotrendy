@@ -72,10 +72,13 @@ class TelegramSender:
             price_change_24h = round(coingecko_data_item.get('price_change_percentage_24h', 0), 2)
             price_change_7d = round(coingecko_data_item.get('price_change_percentage_7d_in_currency', 0), 2)
             is_trending = coingecko_data_item.get('is_trending', False)
+            rsi_1d = kucoin_data_item.get('rsi_1d', 'n/a')
+            rsi_7d = kucoin_data_item.get('rsi_7d', 'n/a')
 
             message += f"*{i}. {symbol} - Score: {score}/10* \
                 \n Social Mentions: {social_mentions} | Trending: {'Yes' if is_trending else 'No'} \
                 \n Price: ${current_price} | 24H: {price_change_24h}% | 7D: {price_change_7d}% \
+                \n RSI 1D: {rsi_1d} | RSI 7D: {rsi_7d} \
                 \n _{reason}_\n\n"
             
         message += "\n_This is an automated analysis and not financial advice._"
