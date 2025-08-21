@@ -15,14 +15,15 @@ class GPTAnalyzer:
             self.client = openai.OpenAI(api_key=api_key)
             
         # Default to GPT-4o mini (almost free) model
-        self.model = "gpt-4o-mini"
+        self.model = os.getenv('GPT_MODEL', 'gpt-5-nano')
         # Maximum context sizes for different models
         self.model_limits = {
             "gpt-4o-mini": 128000, # Updated limit for gpt-4o-mini
             "gpt-4o": 128000,
             "gpt-4-turbo": 128000,
             "gpt-4": 8192,
-            "gpt-3.5-turbo": 16384
+            "gpt-3.5-turbo": 16384,
+            "gpt-5-nano": 400000
         }
         self.enable_kucoin_ta = os.getenv('ENABLE_KUCOIN_TA', 'false').lower() == 'true'
         

@@ -56,6 +56,7 @@ jobs:
         TOP_COINS_LIMIT: ${{ vars.TOP_COINS_LIMIT || '100' }}
         DEVELOPMENT_MODE: false
         SKIP_GPT: ${{ vars.SKIP_GPT || 'false' }}
+        GPT_MODEL: ${{ vars.GPT_MODEL || 'gpt-5-nano' }}
       run: |
         source .venv/bin/activate    # Activate venv again for this step
         python run_breakouts.py             # Run the breakouts analysis script

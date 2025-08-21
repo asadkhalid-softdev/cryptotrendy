@@ -47,6 +47,7 @@ jobs:
 
         # Configuration Settings
         DEVELOPMENT_MODE: false
+        GPT_MODEL: ${{ vars.GPT_MODEL || 'gpt-5-nano' }}
       run: |
         source .venv/bin/activate    # Activate venv again for this step
         python run_assets.py         # Run the assets analysis script 
