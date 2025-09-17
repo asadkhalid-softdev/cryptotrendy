@@ -14,10 +14,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3 # Or consider updating to @v4 if compatible with other actions
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v5 # Using latest stable version
       with:
-        python-version: '3.10'
+        python-version: '3.12'
 
     # Removed the 'Setup uv' step
 
